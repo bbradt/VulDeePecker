@@ -14,8 +14,8 @@ from sklearn.feature_extraction import DictVectorizer
 
 HOME = os.getcwd()
 print("Working in %s" % HOME)
-SRC_SAVE = 'src-compiled/'
-CG_SAVE = 'CG-compiled/'
+SRC_SAVE = 'SRC%s' % os.sep
+CG_SAVE = 'CGD%s' % os.sep
 LABELS = ['CWE-119', 'CWE-399']
 CGD = 'CGD'
 SRC = 'source_files'
@@ -128,7 +128,7 @@ def cg2sym(src, c_vocab='./c_base_vocab.txt'):
 
 def parse_cg(filename):
     print(filename)
-    with open(filename, 'r') as file:
+    with open(filename, 'r', encoding='utf-8') as file:
         data = file.read()
     data = data.replace('\n', '@@')
     instances = data.split('---------------------------------')
@@ -187,9 +187,9 @@ for label in LABELS:
                         savepath = srcpath + savefilename
                         with open(savepath, 'w') as file:
                             file.write(source)
-                        with open(srcpath + TXTFILE, 'w') as file:
+                        with open(os.path.join(srcpath, TXTFILE), 'w') as file:
                             file.write(newline + savefilename)
-                        with open(srcpath + LABELFILE, 'w') as file:
+                        with open(os.path.join(srcpath, LABELFILE), 'w') as file:
                             file.write(newline + '%d' % LABELS.index(label))
                         newline = '\n'
                         print(savefilename, label)
@@ -211,11 +211,14 @@ for label in LABELS:
                         savepath = cgpath + savefilename
                         with open(savepath, 'w') as file:
                             file.write(source)
-                        with open(cgpath + TXTFILE, 'a') as file:
+                        with open(os.path.join(cgpath, TXTFILE), 'a') as file:
                             file.write(newline + savefilename)
-                        with open(cgpath + LABELFILE, 'a') as file:
+                        with open(os.path.join(cgpath, LABELFILE), 'a') as file:
                             file.write(newline + '%d' % LABELS.index(label))
-                        with open(srcpath + label + '_'
-                                  + LABELFILE, 'w') as file:
+                        with open(os.path.join(cgpath, label + '_'
+                                  + LABELFILE), 'a') as file:
                             file.write(newline + '%s' % gb_label)
+                        with open(os.path.join(cgpath, label + '_'
+                                  + TXTFILE), 'a') as file:
+                            file.write(newline + '%s' % savefilename)
                         newline = '\n'
