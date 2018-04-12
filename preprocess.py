@@ -98,10 +98,6 @@ def train_test_split_files(txtfile, labelfile, d=''):
                     data[1].append(text)    # Text
                     data[2].append(line2)   # Label
     print("Writing files")
-    for dw, ww in zip(data[0], data[1]):
-        print(data[1].index(ww), len(data[1]))
-        with open(d + dw.strip(), 'w') as file:
-            file.write(ww)
     if not os.path.exists(d+ train_dir):
         os.makedirs(d+train_dir)
     if not os.path.exists(d+test_dir):
