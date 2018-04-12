@@ -10,7 +10,9 @@ import os
 import shutil
 import json
 import pandas
+from shutil import copyfile
 from sklearn.feature_extraction import DictVectorizer
+from sklearn.model_selection import train_test_split
 
 HOME = os.getcwd()
 print("Working in %s" % HOME)
@@ -80,6 +82,56 @@ def src2vector(c_text, vectorizer=None, symbol=True, **kwargs):
         vectorizer = DictVectorizer()
     vector = vectorizer.fit_transform(c_text)
     return dict(vector=vector, vectorizer=vectorizer)
+
+
+def train_test_split_files(txtfile, labelfile, d=''):
+    data = [[], [], []]
+    train_dir = '%strain_txt%s' % (os.sep, os.sep)
+    test_dir = '%stest_txt%s' % (os.sep, os.sep)
+    with open(d+txtfile, 'r') as file:
+        with open(d+labelfile, 'r') as file2:
+            for line, line2 in zip(file, file2):
+                print(line, line2)
+                with open(d+line.strip(), 'r') as readfile:
+                    text = readfile.read()
+                    data[0].append(line)    # File
+                    data[1].append(text)    # Text
+                    data[2].append(line2)   # Label
+    print("Writing files")
+    for dw, ww in zip(data[0], data[1]):
+        print(data[1].index(ww), len(data[1]))
+        with open(d + dw.strip(), 'w') as file:
+            file.write(ww)
+    if not os.path.exists(d+ train_dir):
+        os.makedirs(d+train_dir)
+    if not os.path.exists(d+test_dir):
+        os.makedirs(d+test_dir)
+    splitting_train, splitting_test = train_test_split(
+        list(range(len(data[0]))), test_size=0.1)
+    print("Training")
+    with open(d+'train_txt.txt', 'w') as file:
+        with open(d+'train_label.txt', 'w') as file2:
+            print("Writing txt train")
+            for j, s in enumerate(splitting_train):
+                print(j)
+                file.write(data[0][s].strip())
+                copyfile(d+data[0][s].strip(), d+ train_dir + data[0][s].strip())
+                file2.write(data[2][s].strip())
+                if j < len(splitting_train) - 1:
+                    file.write('\n')
+                    file2.write('\n')
+    print("Testing")
+    with open(d+'test_txt.txt', 'w') as file:
+        with open(d+'test_label.txt', 'w') as file2:
+            print("Writing txt test")
+            for j, s in enumerate(splitting_test):
+                print(j)
+                file.write(data[0][s].strip())
+                copyfile(d+data[0][s].strip(), d+ test_dir +data[0][s].strip())
+                file2.write(data[2][s].strip())
+                if j < len(splitting_train) - 1:
+                    file.write('\n')
+                    file2.write('\n')
 
 
 def cg2sym(src, c_vocab='./c_base_vocab.txt'):
@@ -222,3 +274,6 @@ for label in LABELS:
                                   + TXTFILE), 'a') as file:
                             file.write(newline + '%s' % savefilename)
                         newline = '\n'
+        print("Splitting CWE-199 into training and test")
+        train_test_split_files('CWE-119_txt.txt', 'CWE-119_label.txt',
+                               d=CG_SAVE)
