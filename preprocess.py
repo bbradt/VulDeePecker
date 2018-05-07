@@ -18,7 +18,7 @@ HOME = os.getcwd()
 print("Working in %s" % HOME)
 SRC_SAVE = 'SRC%s' % os.sep
 CG_SAVE = 'CGD%s' % os.sep
-LABELS = ['CWE-119', 'CWE-399']
+LABELS = ['CWE-119']
 CGD = 'CGD'
 SRC = 'source_files'
 FILEFORM = '%s_%s%s'
@@ -125,7 +125,7 @@ def train_test_split_files(txtfile, labelfile, d=''):
                 file.write(data[0][s].strip())
                 copyfile(d+data[0][s].strip(), d+ test_dir +data[0][s].strip())
                 file2.write(data[2][s].strip())
-                if j < len(splitting_train) - 1:
+                if j < len(splitting_test) - 1:
                     file.write('\n')
                     file2.write('\n')
 
@@ -198,78 +198,87 @@ def parse_cg(filename):
     df = pandas.DataFrame(data_list)
     return df
 
-
-if DO_SRC:
-    if os.path.exists(srcpath):
-        print("Resetting %s" % srcpath)
-        shutil.rmtree(srcpath)
-    print("Making %s" % srcpath)
-    os.makedirs(srcpath)
-if DO_CG:
-    if os.path.exists(cgpath):
-        print("Resetting %s" % cgpath)
-        shutil.rmtree(cgpath)
-    print("Making %s" % cgpath)
-    os.makedirs(cgpath)
-
-for loadpath in cgdpaths:
-    if not os.path.exists(loadpath):
-        raise Exception("CGD dir %s not found" % loadpath)
-for loadpath in srcpaths:
-    if not os.path.exists(loadpath):
-        raise Exception("SRC dir %s not found" % loadpath)
-
-for label in LABELS:
-    newline = ''
+def main():
     if DO_SRC:
-        for root, directories, filenames in os.walk(srcpaths[label]):
-            for filename in filenames:
-                prefix, ext = os.path.splitext(filename)
-                if '.c' in ext:
-                    filepath = os.path.join(root, filename)
-                    try:
-                        with open(filepath, 'r') as file:
-                            source = file.read()
-                        source = source.replace('\n', '')
-                        savefilename = FILEFORM % (label, prefix, ext)
-                        savepath = srcpath + savefilename
-                        with open(savepath, 'w') as file:
-                            file.write(source)
-                        with open(os.path.join(srcpath, TXTFILE), 'w') as file:
-                            file.write(newline + savefilename)
-                        with open(os.path.join(srcpath, LABELFILE), 'w') as file:
-                            file.write(newline + '%d' % LABELS.index(label))
-                        newline = '\n'
-                        print(savefilename, label)
-                    except UnicodeDecodeError:
-                        print("Unicode Decode Error in file %s" % filepath)
-                        continue
-    newline = ''
+        if os.path.exists(srcpath):
+            print("Resetting %s" % srcpath)
+            shutil.rmtree(srcpath)
+        print("Making %s" % srcpath)
+        os.makedirs(srcpath)
     if DO_CG:
-        for root, directories, filenames in os.walk(cgdpaths[label]):
-            for filename in filenames:
-                prefix, ext = os.path.splitext(filename)
-                if '.txt' in ext:
-                    filepath = os.path.join(root, filename)
-                    df = parse_cg(filepath)
-                    for index, instance in df.iterrows():
-                        source = instance['src']
-                        gb_label = instance['label']
-                        savefilename = label + '_' + instance['filename']
-                        savepath = cgpath + savefilename
-                        with open(savepath, 'w') as file:
-                            file.write(source)
-                        with open(os.path.join(cgpath, TXTFILE), 'a') as file:
-                            file.write(newline + savefilename)
-                        with open(os.path.join(cgpath, LABELFILE), 'a') as file:
-                            file.write(newline + '%d' % LABELS.index(label))
-                        with open(os.path.join(cgpath, label + '_'
-                                  + LABELFILE), 'a') as file:
-                            file.write(newline + '%s' % gb_label)
-                        with open(os.path.join(cgpath, label + '_'
-                                  + TXTFILE), 'a') as file:
-                            file.write(newline + '%s' % savefilename)
-                        newline = '\n'
-        print("Splitting CWE-199 into training and test")
-        train_test_split_files('CWE-119_txt.txt', 'CWE-119_label.txt',
-                               d=CG_SAVE)
+        if os.path.exists(cgpath):
+            print("Resetting %s" % cgpath)
+            shutil.rmtree(cgpath)
+        print("Making %s" % cgpath)
+        os.makedirs(cgpath)
+    
+    for loadpath in cgdpaths:
+        if not os.path.exists(loadpath):
+            raise Exception("CGD dir %s not found" % loadpath)
+    for loadpath in srcpaths:
+        if not os.path.exists(loadpath):
+            raise Exception("SRC dir %s not found" % loadpath)
+    
+    for label in LABELS:
+        newline = ''
+        if DO_SRC:
+            for root, directories, filenames in os.walk(srcpaths[label]):
+                for filename in filenames:
+                    prefix, ext = os.path.splitext(filename)
+                    if '.c' in ext:
+                        filepath = os.path.join(root, filename)
+                        try:
+                            with open(filepath, 'r') as file:
+                                source = file.read()
+                            source = source.replace('\n', '')
+                            savefilename = FILEFORM % (label, prefix, ext)
+                            savepath = srcpath + savefilename
+                            with open(savepath, 'w') as file:
+                                file.write(source)
+                            with open(os.path.join(srcpath, TXTFILE), 'w') as file:
+                                file.write(newline + savefilename)
+                            with open(os.path.join(srcpath, LABELFILE), 'w') as file:
+                                file.write(newline + '%d' % LABELS.index(label))
+                            newline = '\n'
+                            print(savefilename, label)
+                        except UnicodeDecodeError:
+                            print("Unicode Decode Error in file %s" % filepath)
+                            continue
+        newline = ''
+        if DO_CG:
+            for root, directories, filenames in os.walk(cgdpaths[label]):
+                for filename in filenames:
+                    prefix, ext = os.path.splitext(filename)
+                    print(prefix, ext, root)
+                    if '.txt' in ext:
+                        filepath = os.path.join(root, filename)
+                        df = parse_cg(filepath)
+                        fn2, ext2 = os.path.splitext(filepath)
+                        print(os.path.join(cgpath, fn2 + '.csv'))
+                        df.to_csv(os.path.join(cgpath, fn2 + '.csv'))
+                        for index, instance in df.iterrows():
+                            source = instance['src']
+                            gb_label = instance['label']
+                            savefilename = label + '_' + instance['filename']
+                            savepath = cgpath + savefilename
+                            with open(savepath, 'w') as file:
+                                file.write(source)
+                            with open(os.path.join(cgpath, TXTFILE), 'a') as file:
+                                file.write(newline + savefilename)
+                            with open(os.path.join(cgpath, LABELFILE), 'a') as file:
+                                file.write(newline + '%d' % LABELS.index(label))
+                            with open(os.path.join(cgpath, label + '_'
+                                      + LABELFILE), 'a') as file:
+                                file.write(newline + '%s' % gb_label)
+                            with open(os.path.join(cgpath, label + '_'
+                                      + TXTFILE), 'a') as file:
+                                file.write(newline + '%s' % savefilename)
+                            newline = '\n'
+            print("Splitting CWE-119 into training and test")
+            train_test_split_files('CWE-119_txt.txt', 'CWE-119_label.txt',
+                                   d=CG_SAVE)
+
+
+if __name__ == '__main__':
+    main()
+    #train_test_split_files('CWE-399_txt.txt', 'CWE-399_label.txt', d=CG_SAVE)
